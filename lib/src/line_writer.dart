@@ -163,8 +163,17 @@ class LineWriter {
           _buffer.write(_lineEnding);
           if (chunk.isDouble) _buffer.write(_lineEnding);
         }
+        bool tabs = true;
+        int columns = splits.getColumn(i);
 
-        _buffer.write(' ' * (splits.getColumn(i)));
+        if (tabs) {
+          _buffer.write('\t' * (columns / 2).round());
+          if (columns % 2 == 1) {
+            _buffer.write(' ');
+          }
+        } else {
+          _buffer.write(' ' * columns);
+        }
       } else {
         if (chunk.spaceWhenUnsplit) _buffer.write(' ');
       }
