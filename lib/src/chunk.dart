@@ -2,6 +2,7 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 import 'fast_hash.dart';
+import 'marking_scheme.dart';
 import 'nesting_level.dart';
 import 'rule/rule.dart';
 
@@ -114,10 +115,8 @@ class Chunk extends Selection {
 
   /// Whether this chunk marks the end of a range of chunks that can be line
   /// split independently of the following chunks.
-  ///
-  /// You must call markDivide() before accessing this.
   bool get canDivide => _canDivide;
-  late final bool _canDivide;
+  bool _canDivide = true;
 
   /// The number of characters in this chunk when unsplit.
   int get length => (_spaceWhenUnsplit ? 1 : 0) + _text.length;
@@ -177,9 +176,12 @@ class Chunk extends Selection {
   /// that [Rule].
   bool indentBlock(int Function(Rule) getValue) => false;
 
-  // Mark whether this chunk can divide the range of chunks.
-  void markDivide(bool canDivide) {
-    _canDivide = canDivide;
+  /// Prevent the line splitter from diving at this chunk.
+  ///
+  /// This should be called on any chunk where line splitting choices before
+  /// and after this chunk relate to each other.
+  void preventDivide() {
+    _canDivide = false;
   }
 
   @override
@@ -293,7 +295,11 @@ class OpenSpan {
 /// This is a wrapper around the cost so that spans have unique identities.
 /// This way we can correctly avoid paying the cost multiple times if the same
 /// span is split by multiple chunks.
-class Span extends FastHash {
+///
+/// Spans can be marked during processing in an algorithm but should be left
+/// unmarked when the algorithm finishes to make marking work in subsequent
+/// calls.
+class Span extends FastHash with Markable {
   /// The cost applied when the span is split across multiple lines or `null`
   /// if the span is for a multisplit.
   final int cost;

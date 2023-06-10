@@ -23,7 +23,7 @@ longFunctionIsLoooooooooooooong(
     argument, argument);
 >>> wrap with just one argument
 print('a very very long string literal');
-<<<<
+<<<
 print(
     'a very very long string literal');
 >>>
@@ -346,4 +346,16 @@ fn(
   argument,
   name: argument,
   argument,
+);
+>>> preserve line breaks in trailing comma argument list with line comment
+function(// yeah
+first, second, third,
+fourth, fifth,
+sixth,);
+<<<
+function(
+  // yeah
+  first, second, third,
+  fourth, fifth,
+  sixth,
 );

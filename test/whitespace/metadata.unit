@@ -238,7 +238,7 @@ function(@Annotation @VeryLongMetadataAnnotation longParameter) {}
 function(
     @Annotation
     @VeryLongMetadataAnnotation
-        longParameter) {}
+    longParameter) {}
 >>> unsplit with trailing commas
 function(@Annotation longParameter,@Annotation @Other longParameter2,) {}
 <<<
@@ -254,7 +254,7 @@ function(
   @Annotation
   @Other
   @Third
-      longParameter2,
+  longParameter2,
 ) {}
 >>> keep "covariant" with parameter
 class A { function(@Annotation @VeryLongMetadataAnnotation covariant longParameter) {} }
@@ -263,7 +263,7 @@ class A {
   function(
       @Annotation
       @VeryLongMetadataAnnotation
-          covariant longParameter) {}
+      covariant longParameter) {}
 }
 >>> keep "required" with parameter
 class A { function({@Annotation @VeryLongMetadataAnnotation required longParameter}) {} }
@@ -272,7 +272,7 @@ class A {
   function(
       {@Annotation
       @VeryLongMetadataAnnotation
-          required longParameter}) {}
+      required longParameter}) {}
 }
 >>> metadata on function typedef
 @foo typedef Fn = Function();
@@ -317,6 +317,105 @@ main() {
     ;
   }
 }
+>>> single metadata on for loop
+main() {
+  for (   @a    var i = x;;) {;}
+}
+<<<
+main() {
+  for (@a var i = x;;) {
+    ;
+  }
+}
+>>> multiple metadata on for loop
+main() {
+  for (   @a  @b    var i = x;;) {;}
+}
+<<<
+main() {
+  for (@a @b var i = x;;) {
+    ;
+  }
+}
+>>> long metadata on for loop
+main() {
+  for (@Annotation @VeryLongMetadataAnnotation(1, 2) var i = veryLong.iterator + expression;;) {;}
+}
+<<<
+main() {
+  for (@Annotation
+      @VeryLongMetadataAnnotation(1, 2)
+      var i = veryLong.iterator +
+          expression;;) {
+    ;
+  }
+}
+>>> single metadata on pattern for-in loop
+main() {
+  for (   @a    var [i] in list) {;}
+}
+<<<
+main() {
+  for (@a var [i] in list) {
+    ;
+  }
+}
+>>> multiple metadata on pattern for-in loop
+main() {
+  for (   @a  @b    var [i] in list) {;}
+}
+<<<
+main() {
+  for (@a @b var [i] in list) {
+    ;
+  }
+}
+>>> long metadata on pattern for-in loop
+main() {
+  for (@Annotation @VeryLongMetadataAnnotation(1, 2) var [i] in veryLong.iterator + expression) {;}
+}
+<<<
+main() {
+  for (@Annotation
+      @VeryLongMetadataAnnotation(1, 2)
+      var [i] in veryLong.iterator +
+          expression) {
+    ;
+  }
+}
+>>> single metadata on pattern for loop
+main() {
+  for (   @a    var [i] = x;;) {;}
+}
+<<<
+main() {
+  for (@a var [i] = x;;) {
+    ;
+  }
+}
+>>> multiple metadata on pattern for loop
+main() {
+  for (   @a  @b    var [i] = x;;) {;}
+}
+<<<
+main() {
+  for (@a @b var [i] = x;;) {
+    ;
+  }
+}
+>>> long metadata on pattern for loop
+main() {
+  for (@Annotation @VeryLongMetadataAnnotation(1, 2) var [i] = veryLong.iterator + expression;;) {;}
+}
+<<<
+main() {
+  for (@Annotation
+      @VeryLongMetadataAnnotation(1, 2)
+      var [i] = veryLong.iterator +
+          expression;;) {
+    ;
+  }
+}
 >>> metadata on enum cases
 enum Foo { a, @meta b, @meta1 @meta2 c}
 <<<
@@ -344,6 +443,11 @@ enum Foo {
 <<<
 @meta
 mixin M {}
+>>> metadata on mixin
+@meta  base   mixin M {}
+<<<
+@meta
+base mixin M {}
 >>> metadata on extension
 @meta extension A on B {}
 <<<
