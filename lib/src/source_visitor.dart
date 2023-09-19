@@ -22,6 +22,7 @@ import 'rule/combinator.dart';
 import 'rule/rule.dart';
 import 'rule/type_argument.dart';
 import 'source_code.dart';
+import 'source_comment.dart';
 import 'style_fix.dart';
 
 /// Visits every token of the AST and passes all of the relevant bits to a
@@ -590,7 +591,6 @@ class SourceVisitor extends ThrowingAstVisitor {
     modifier(node.finalKeyword);
     modifier(node.sealedKeyword);
     modifier(node.mixinKeyword);
-    modifier(node.inlineKeyword);
     token(node.classKeyword);
     space();
     token(node.name);
@@ -1063,7 +1063,13 @@ class SourceVisitor extends ThrowingAstVisitor {
     _endBody(node.rightBracket,
         forceSplit: semicolon != null ||
             trailingComma != null ||
-            node.members.isNotEmpty);
+            node.members.isNotEmpty ||
+            // If there is a line comment after an enum constant, it won't
+            // automatically force the enum body to split since the rule for
+            // the constants is the hard rule used by the entire block and its
+            // hardening state doesn't actually change. Instead, look
+            // explicitly for a line comment here.
+            _containsLineComments(node.constants));
   }
 
   @override
@@ -2252,22 +2258,19 @@ class SourceVisitor extends ThrowingAstVisitor {
 
   @override
   void visitNamedType(NamedType node) {
-    var importPrefix = node.importPrefix;
-    if (importPrefix != null) {
+    if (node.importPrefix case var importPrefix?) {
       builder.startSpan();
-
       token(importPrefix.name);
       soloZeroSplit();
       token(importPrefix.period);
+      token(node.name2);
+      builder.endSpan();
+    } else {
+      token(node.name2);
     }
 
-    token(node.name2);
     visit(node.typeArguments);
     token(node.question);
-
-    if (importPrefix != null) {
-      builder.endSpan();
-    }
   }
 
   @override
@@ -3932,12 +3935,13 @@ class SourceVisitor extends ThrowingAstVisitor {
     return Cost.assign;
   }
 
-  /// Returns `true` if the collection withs [elements] delimited by
+  /// Returns `true` if the collection with [elements] delimited by
   /// [rightBracket] contains any line comments.
   ///
   /// This only looks for comments at the element boundary. Comments within an
   /// element are ignored.
-  bool _containsLineComments(Iterable<AstNode> elements, Token rightBracket) {
+  bool _containsLineComments(Iterable<AstNode> elements,
+      [Token? rightBracket]) {
     bool hasLineCommentBefore(Token token) {
       Token? comment = token.precedingComments;
       for (; comment != null; comment = comment.next) {
@@ -3953,7 +3957,11 @@ class SourceVisitor extends ThrowingAstVisitor {
     }
 
     // Look before the closing bracket.
-    return hasLineCommentBefore(rightBracket);
+    if (rightBracket != null) {
+      if (hasLineCommentBefore(rightBracket)) return true;
+    }
+
+    return false;
   }
 
   /// Begins writing a bracket-delimited body whose contents are a nested
@@ -4265,12 +4273,6 @@ class SourceVisitor extends ThrowingAstVisitor {
       var type = CommentType.block;
       if (text.startsWith('///') && !text.startsWith('////') ||
           text.startsWith('/**') && text != '/**/') {
-        // TODO(rnystrom): Check that the comment isn't '/**/' because some of
-        // the dart_style tests use that to mean inline block comments. While
-        // refactoring the Chunk representation to move splits to the front of
-        // Chunk, I want to preserve the current test behavior. The fact that
-        // those tests pass with the old representation is a buggy quirk of the
-        // comment handling.
         type = CommentType.doc;
       } else if (comment.type == TokenType.SINGLE_LINE_COMMENT) {
         type = CommentType.line;
